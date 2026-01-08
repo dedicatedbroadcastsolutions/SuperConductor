@@ -36,8 +36,9 @@ jobs:
           corepack enable
 
           # set isolated electron-builder cache early so downloads use it
-          echo "XDG_CACHE_HOME=${{ runner.temp }}/electron-builder-cache-${{ github.run_id }}"
-          export XDG_CACHE_HOME=${{ runner.temp }}/electron-builder-cache-${{ github.run_id }}
+          XDG_CACHE_HOME="${{ runner.temp }}/electron-builder-cache-${{ github.run_id }}"
+          export XDG_CACHE_HOME
+          echo "XDG_CACHE_HOME=$XDG_CACHE_HOME" >> "$GITHUB_ENV"
           rm -rf "$XDG_CACHE_HOME/electron-builder" || true
           mkdir -p "$XDG_CACHE_HOME"
 
