@@ -159,10 +159,8 @@ export class CasparCGSideload implements SideLoadDevice {
 					const thumbnailQuery = await this.ccg.thumbnailRetrieve({ filename: `"${resource.name}"` })
 					if (thumbnailQuery.error) throw thumbnailQuery.error
 
-						const thumbnail = await thumbnailQuery.request
-						if (this._isSuccessful(thumbnail)) {
-							const thumbnailData =
-								Array.isArray(thumbnail.data) && typeof thumbnail.data[0] === 'string'
+					const thumbnail = await thumbnailQuery.request
+					if (thumbnail && this._isSuccessful(thumbnail)) {
 									? thumbnail.data[0]
 									: undefined
 							resource.thumbnail = thumbnailData && this._toPngDataUri(thumbnailData)
