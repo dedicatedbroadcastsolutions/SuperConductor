@@ -156,9 +156,7 @@ export class CasparCGSideload implements SideLoadDevice {
 
 				if ((resource.type === 'image' || resource.type === 'video') && TMP_THUMBNAIL_LIMIT > 0) {
 					try {
-						const thumbnailQuery = await this.ccg.thumbnailRetrieve({ filename: resource.name })
-						if (thumbnailQuery.error) throw thumbnailQuery.error
-
+					const thumbnailQuery = await this.ccg.thumbnailRetrieve({ filename: `"${resource.name}"` })
 						const thumbnail = await thumbnailQuery.request
 						if (this._isSuccessful(thumbnail)) {
 							const thumbnailData =
