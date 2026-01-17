@@ -163,10 +163,12 @@ export class CasparCGSideload implements SideLoadDevice {
 					if (thumbnail && this._isSuccessful(thumbnail)) {
 						const thumbnailData =
 							Array.isArray(thumbnail.data) && typeof thumbnail.data[0] === 'string'
-							resource.thumbnail = thumbnailData && this._toPngDataUri(thumbnailData)
-							TMP_THUMBNAIL_LIMIT--
-						} // else: probably CasparCG's media-scanner isn't running
-					} catch (error) {
+								? thumbnail.data[0]
+								: undefined
+						resource.thumbnail = thumbnailData ? this._toPngDataUri(thumbnailData) : undefined
+						TMP_THUMBNAIL_LIMIT--
+					} // else: probably CasparCG's media-scanner isn't running
+				} catch (error) {
 						this.log.error(`Could not set thumbnail for media "${resource.name}".`, error)
 					}
 				}
