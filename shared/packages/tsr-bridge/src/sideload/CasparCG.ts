@@ -156,19 +156,19 @@ export class CasparCGSideload implements SideLoadDevice {
 
 				if ((resource.type === 'image' || resource.type === 'video') && TMP_THUMBNAIL_LIMIT > 0) {
 					try {
-					const thumbnailQuery = await this.ccg.thumbnailRetrieve({ filename: `"${resource.name}"` })
-					if (thumbnailQuery.error) throw thumbnailQuery.error
+						const thumbnailQuery = await this.ccg.thumbnailRetrieve({ filename: `"${resource.name}"` })
+						if (thumbnailQuery.error) throw thumbnailQuery.error
 
-					const thumbnail = await thumbnailQuery.request
-					if (thumbnail && this._isSuccessful(thumbnail)) {
-						const thumbnailData =
-							Array.isArray(thumbnail.data) && typeof thumbnail.data[0] === 'string'
-								? thumbnail.data[0]
-								: undefined
-						resource.thumbnail = thumbnailData ? this._toPngDataUri(thumbnailData) : undefined
-						TMP_THUMBNAIL_LIMIT--
-					} // else: probably CasparCG's media-scanner isn't running
-				} catch (error) {
+						const thumbnail = await thumbnailQuery.request
+						if (thumbnail && this._isSuccessful(thumbnail)) {
+							const thumbnailData =
+								Array.isArray(thumbnail.data) && typeof thumbnail.data[0] === 'string'
+									? thumbnail.data[0]
+									: undefined
+							resource.thumbnail = thumbnailData ? this._toPngDataUri(thumbnailData) : undefined
+							TMP_THUMBNAIL_LIMIT--
+						} // else: probably CasparCG's media-scanner isn't running
+					} catch (error) {
 						this.log.error(`Could not set thumbnail for media "${resource.name}".`, error)
 					}
 				}
