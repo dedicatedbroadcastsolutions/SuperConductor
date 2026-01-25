@@ -28,9 +28,9 @@ const storage = new StorageHandler(log, {
 let server: TSRBridgeServer | undefined
 let systemInterval: NodeJS.Timeout | undefined
 
-// On Linux, disable Chromium's OS-level sandbox to avoid
-// setuid sandbox errors when the chrome-sandbox binary isn't configured.
-if (process.platform === 'linux') {
+// Only disable sandbox in development on Linux to avoid SUID errors.
+const disableSandbox = process.platform === 'linux' && !app.isPackaged
+if (disableSandbox) {
 	app.commandLine.appendSwitch('no-sandbox')
 }
 
@@ -43,12 +43,11 @@ const createWindow = async (): Promise<void> => {
 		width: appData.windowPosition.width,
 		height: appData.windowPosition.height,
 
-		webPreferences: {
-			nodeIntegration: true,
-			contextIsolation: false,
-					// Disable sandbox for Linux development compatibility
-					sandbox: false,
-		},
+    	webPreferences: {
+    		nodeIntegration: true,
+    		contextIsolation: false,
+    		sandbox: !disableSandbox,
+    	},
 	})
 	if (appData.windowPosition.x !== undefined) {
 		// Hack to make it work on Windows with multi-dpi screens
