@@ -11,6 +11,12 @@ import winston from 'winston'
 import { SerializableLedger } from './models/project/Project.js'
 import { fileURLToPath } from 'url'
 
+// On Linux, disable Chromium's OS-level sandbox to avoid
+// setuid sandbox errors when the chrome-sandbox binary isn't configured.
+if (process.platform === 'linux') {
+	app.commandLine.appendSwitch('no-sandbox')
+}
+
 function createWindow(log: winston.Logger, superConductor: SuperConductor): void {
 	const appData = superConductor.storage.getAppData()
 
@@ -23,6 +29,7 @@ function createWindow(log: winston.Logger, superConductor: SuperConductor): void
 		webPreferences: {
 			nodeIntegration: true,
 			contextIsolation: true,
+			sandbox: false,
 			preload: fileURLToPath(new URL('./preload.mjs', import.meta.url)),
 		},
 		title: 'SuperConductor',
