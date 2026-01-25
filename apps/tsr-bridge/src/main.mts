@@ -28,6 +28,12 @@ const storage = new StorageHandler(log, {
 let server: TSRBridgeServer | undefined
 let systemInterval: NodeJS.Timeout | undefined
 
+// On Linux, disable Chromium's OS-level sandbox to avoid
+// setuid sandbox errors when the chrome-sandbox binary isn't configured.
+if (process.platform === 'linux') {
+	app.commandLine.appendSwitch('no-sandbox')
+}
+
 const createWindow = async (): Promise<void> => {
 	const appData = storage.getAppData()
 
@@ -40,6 +46,8 @@ const createWindow = async (): Promise<void> => {
 		webPreferences: {
 			nodeIntegration: true,
 			contextIsolation: false,
+					// Disable sandbox for Linux development compatibility
+					sandbox: false,
 		},
 	})
 	if (appData.windowPosition.x !== undefined) {
