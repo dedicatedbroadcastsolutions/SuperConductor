@@ -43,11 +43,11 @@ const createWindow = async (): Promise<void> => {
 		width: appData.windowPosition.width,
 		height: appData.windowPosition.height,
 
-    	webPreferences: {
-    		nodeIntegration: true,
-    		contextIsolation: false,
-    		sandbox: !disableSandbox,
-    	},
+		webPreferences: {
+			nodeIntegration: true,
+			contextIsolation: false,
+			sandbox: !disableSandbox,
+		},
 	})
 	if (appData.windowPosition.x !== undefined) {
 		// Hack to make it work on Windows with multi-dpi screens

@@ -26,12 +26,12 @@ function createWindow(log: winston.Logger, superConductor: SuperConductor): void
 		width: appData.windowPosition.width,
 		height: appData.windowPosition.height,
 
-    		webPreferences: {
-    			nodeIntegration: true,
-    			contextIsolation: true,
-    			sandbox: !disableSandbox,
-    			preload: fileURLToPath(new URL('./preload.mjs', import.meta.url)),
-    		},
+		webPreferences: {
+			nodeIntegration: true,
+			contextIsolation: true,
+			sandbox: !disableSandbox,
+			preload: fileURLToPath(new URL('./preload.mjs', import.meta.url)),
+		},
 		title: 'SuperConductor',
 	})
 
