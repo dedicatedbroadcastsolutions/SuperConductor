@@ -223,7 +223,6 @@ export function formatDurationLabeled(inputMs: number | undefined): string {
 
 	let returnStr = ''
 	const { h, m, s, ms } = millisecondsToTime(inputMs)
-	const secondTenths = Math.floor(ms / 100)
 
 	if (h) {
 		returnStr += `${h}h`
@@ -232,14 +231,10 @@ export function formatDurationLabeled(inputMs: number | undefined): string {
 		returnStr += `${m}m`
 	}
 	if (s) {
-		if (secondTenths) {
-			// Include both seconds and milliseconds so output contains the whole-second
-			// substring (eg. "1s500ms"), which tests expect.
-			returnStr += `${s}s${ms}ms`
-		} else {
-			returnStr += `${s}s`
-		}
+		// Show only seconds, without milliseconds
+		returnStr += `${s}s`
 	} else if (ms > 0 && !h && !m) {
+		// Only show milliseconds if there are no hours, minutes, or seconds
 		returnStr += `${ms}ms`
 	}
 
