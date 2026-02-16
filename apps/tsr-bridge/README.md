@@ -60,7 +60,7 @@ Before sending timelines, you must configure which devices (CasparCG, ATEM, OBS,
 	"type": "setSettings",
 	"devices": {
 		"casparcg0": {
-			"type": 0,
+			"type": "CASPARCG",
 			"options": {
 				"host": "127.0.0.1",
 				"port": 5250
@@ -72,33 +72,40 @@ Before sending timelines, you must configure which devices (CasparCG, ATEM, OBS,
 }
 ```
 
-Device types:
+Recommended: use string enum values (for example `CASPARCG`, `ATEM`, `OSC`) for `type`, `device`, and `deviceType`. The numeric values below are legacy and kept for backward compatibility.
 
-- `0` = CasparCG
-- `1` = ATEM
-- `2` = Lawo
-- `3` = HTTPSend
-- `4` = Panasonic PTZ
-- `5` = TCPSend
-- `6` = Hyperdeck
-- `7` = Pharos
-- `8` = OSC
-- `9` = HTTPWatcher
-- `10` = Sisyfos
-- `11` = Quantel
-- `12` = VizMSE
-- `13` = Singular.Live
-- `14` = Shotoku
-- `15` = VMix
-- `16` = OBS
-- `17` = Telemetrics
-- `18` = SofieChef
-- `19` = TriCaster
-- `20` = MultiOSC
+Device types (legacy numeric values):
+
+Note: To determine the valid string values, use the `DeviceType` enum from `timeline-state-resolver-types` in your client or inspect the package's `DeviceType` definition (for example in `node_modules/timeline-state-resolver-types/dist/index.d.ts`). Examples below use the recommended string enum values.
+
+- `0` = Abstract (empty)
+- `1` = CasparCG
+- `2` = ATEM
+- `3` = Lawo
+- `4` = HTTPSend
+- `5` = Panasonic PTZ
+- `6` = TCPSend
+- `7` = Hyperdeck
+- `8` = Pharos
+- `9` = OSC
+- `10` = HTTPWatcher
+- `11` = Sisyfos
+- `12` = Quantel
+- `13` = VizMSE
+- `14` = Singular.Live
+- `15` = Shotoku
+- `20` = VMix
+- `21` = OBS
+- `22` = SofieChef
+- `23` = Telemetrics
+- `24` = TriCaster
+- `25` = MultiOSC
 
 ### Setting Mappings
 
 Mappings define how timeline layers map to device outputs:
+
+Note: `mappingType` accepts string enum names (for example, `mixEffect`, `program`, `input`) from `timeline-state-resolver-types`. Numeric values are legacy and still accepted for backward compatibility. Use the mapping enums for the device (for example, `MappingAtemType`, `MappingVmixType`, `MappingObsType`) to see valid string values.
 
 **Send `setMappings` message:**
 
@@ -107,10 +114,10 @@ Mappings define how timeline layers map to device outputs:
 	"type": "setMappings",
 	"mappings": {
 		"caspar_player0": {
-			"device": 0,
+			"device": "CASPARCG",
 			"deviceId": "casparcg0",
 			"options": {
-				"mappingType": 0,
+				"mappingType": "layer",
 				"channel": 1,
 				"layer": 10
 			}
@@ -139,8 +146,8 @@ Add a timeline to be played by TSR:
 			},
 			"layer": "caspar_player0",
 			"content": {
-				"deviceType": 0,
-				"type": 1,
+				"deviceType": "CASPARCG",
+				"type": "media",
 				"file": "my-video.mp4",
 				"loop": false
 			}
@@ -277,7 +284,7 @@ Retrieve the full timeline content for a specific timeline ID:
 			"id": "obj0",
 			"enable": { "start": 1708070400000, "duration": 5000 },
 			"layer": "caspar_player0",
-			"content": { "deviceType": 0, "type": 1, "file": "my-video.mp4" }
+			"content": { "deviceType": "CASPARCG", "type": "media", "file": "my-video.mp4" }
 		}
 	]
 }
@@ -358,30 +365,32 @@ enable: [
 
 **`content`** (object): Device-specific content. Always includes `deviceType` and varies by device.
 
+Note: `content.type` uses string enum values from `timeline-state-resolver-types` (for example, CasparCG `media`, `template`; OBS `CURRENT_SCENE`, `INPUT_MEDIA`; OSC `osc`). Legacy numeric values may work in older payloads, but string enums are the documented/typed form.
+
 Common device types:
 
-- `0` = CasparCG
-- `1` = ATEM
-- `5` = TCPSend
-- `6` = Hyperdeck
-- `8` = OSC
-- `15` = VMix
-- `16` = OBS
-- `19` = TriCaster
+- `1` = CasparCG
+- `2` = ATEM
+- `6` = TCPSend
+- `7` = Hyperdeck
+- `9` = OSC
+- `20` = VMix
+- `21` = OBS
+- `24` = TriCaster
 
 ```javascript
 // CasparCG media file
 content: {
-  deviceType: 0,
-  type: 1, // MEDIA
+	deviceType: "CASPARCG",
+	type: "media", // MEDIA
   file: "my-video.mp4",
   loop: false
 }
 
 // ATEM mix effect
 content: {
-  deviceType: 1,
-  type: 0, // ME
+	deviceType: "ATEM",
+	type: "me", // ME
   me: {
     input: 1,
     transition: 0 // CUT
@@ -449,12 +458,11 @@ children: [
   "priority": 1,
   "classes": ["main-content"],
   "content": {
-    "deviceType": 0,
-    "type": 1,
+		"deviceType": "CASPARCG",
+		"type": "media",
     "file": "intro.mp4",
-    "loop": false,
-    "seek": 0,
-    "inPoint": 0,
+		"loop": false,
+		"inPoint": 0,
     "length": 30000
   },
   "isGroup": false,
@@ -467,8 +475,8 @@ children: [
         "duration": 10000
       },
       "content": {
-        "deviceType": 0,
-        "type": 2,  // TEMPLATE
+				"deviceType": "CASPARCG",
+				"type": "template",  // TEMPLATE
         "name": "lower_third",
         "data": {
           "f0": "John Doe",
@@ -510,8 +518,8 @@ Keyframe object structure:
   "layer": "caspar_gfx0",
   "enable": { "start": 0, "duration": 10000 },
   "content": {
-    "deviceType": 0,
-    "type": 2,
+		"deviceType": "CASPARCG",
+		"type": "template",
     "name": "lower_third",
     "data": { "opacity": 0 }
   },
@@ -536,9 +544,11 @@ Keyframe object structure:
 
 #### Device-Specific Content Properties
 
+Note: TSR Bridge only documents properties that are recognized by the bridge. Properties like `seek`, `pauseTime`, or `playing` are not supported content fields in this app and are intentionally omitted from examples.
+
 Some devices support additional content properties beyond the standard configuration:
 
-**CasparCG Media (`deviceType: 0, type: 1`)**
+**CasparCG Media (`deviceType: CASPARCG, type: media`)**
 
 - `noStarttime` (boolean): If true, prevents TSR from seeking to the correct position when starting playback. Useful when you want media to play from the beginning regardless of timeline position. Default: false
 
@@ -548,8 +558,8 @@ Some devices support additional content properties beyond the standard configura
   "layer": "caspar_player0",
   "enable": { "start": 5000, "duration": 30000 },
   "content": {
-    "deviceType": 0,
-    "type": 1,
+		"deviceType": "CASPARCG",
+		"type": "media",
     "file": "background.mp4",
     "noStarttime": true  // Play from start, don't seek based on timeline position
   }
@@ -563,8 +573,8 @@ When using CasparCG content, you can define transitions via the `transitions` pr
 ```javascript
 {
   "content": {
-    "deviceType": 0,
-    "type": 1,
+		"deviceType": "CASPARCG",
+		"type": "media",
     "file": "video.mp4",
     "transitions": {
       "inTransition": {
@@ -580,7 +590,7 @@ When using CasparCG content, you can define transitions via the `transitions` pr
 }
 ```
 
-**OSC Messages (`deviceType: 8`)**
+**OSC Messages (`deviceType: OSC`)**
 
 OSC (Open Sound Control) allows controlling external devices via UDP or TCP network messages.
 
@@ -588,8 +598,8 @@ OSC (Open Sound Control) allows controlling external devices via UDP or TCP netw
 
 ```javascript
 {
-  "osc_device": {
-    "type": 8,  // OSC
+	"osc_device": {
+		"type": "OSC",  // OSC
     "options": {
       "host": "127.0.0.1",
       "port": 8000,
@@ -605,8 +615,8 @@ OSC mappings don't require specific options beyond the standard device and devic
 
 ```javascript
 {
-  "osc_layer": {
-    "device": 8,
+	"osc_layer": {
+		"device": "OSC",
     "deviceId": "osc_device",
     "layerName": "OSC Control",
     "options": {}
@@ -623,8 +633,8 @@ OSC timeline objects specify the OSC path and values to send:
   "id": "osc_fader",
   "layer": "osc_layer",
   "enable": { "start": 0, "duration": 5000 },
-  "content": {
-    "deviceType": 8,
+	"content": {
+		"deviceType": "OSC",
     "type": "osc",
     "path": "/mixer/fader1",
     "values": [
@@ -651,8 +661,8 @@ Send multiple values in a single OSC message:
 
 ```javascript
 {
-  "content": {
-    "deviceType": 8,
+	"content": {
+		"deviceType": "OSC",
     "type": "osc",
     "path": "/mixer/channel/1",
     "values": [
@@ -670,8 +680,8 @@ OSC values can transition smoothly over time with easing functions:
 
 ```javascript
 {
-  "content": {
-    "deviceType": 8,
+	"content": {
+		"deviceType": "OSC",
     "type": "osc",
     "path": "/mixer/fader1",
     "values": [
@@ -718,8 +728,8 @@ OSC values can transition smoothly over time with easing functions:
     "start": 0,
     "duration": 3000
   },
-  "content": {
-    "deviceType": 8,
+	"content": {
+		"deviceType": "OSC",
     "type": "osc",
     "path": "/audio/master/fader",
     "values": [
@@ -816,7 +826,7 @@ ws.on('message', (data) => {
 						device: 0,
 						deviceId: 'casparcg0',
 						options: {
-							mappingType: 0,
+							mappingType: 'layer',
 							channel: 1,
 							layer: 10,
 						},
@@ -837,7 +847,7 @@ ws.on('message', (data) => {
 						enable: { start: Date.now() + 1000 },
 						layer: 'layer0',
 						content: {
-							deviceType: 0,
+							deviceType: 'CASPARCG',
 							type: 1,
 							file: 'AMB',
 						},
