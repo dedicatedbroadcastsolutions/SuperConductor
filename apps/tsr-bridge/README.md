@@ -580,6 +580,163 @@ When using CasparCG content, you can define transitions via the `transitions` pr
 }
 ```
 
+**OSC Messages (`deviceType: 8`)**
+
+OSC (Open Sound Control) allows controlling external devices via UDP or TCP network messages.
+
+**Device Configuration:**
+
+```javascript
+{
+  "osc_device": {
+    "type": 8,  // OSC
+    "options": {
+      "host": "127.0.0.1",
+      "port": 8000,
+      "type": "udp"  // or "tcp"
+    }
+  }
+}
+```
+
+**Mapping Configuration:**
+
+OSC mappings don't require specific options beyond the standard device and deviceId:
+
+```javascript
+{
+  "osc_layer": {
+    "device": 8,
+    "deviceId": "osc_device",
+    "layerName": "OSC Control",
+    "options": {}
+  }
+}
+```
+
+**Timeline Content:**
+
+OSC timeline objects specify the OSC path and values to send:
+
+```javascript
+{
+  "id": "osc_fader",
+  "layer": "osc_layer",
+  "enable": { "start": 0, "duration": 5000 },
+  "content": {
+    "deviceType": 8,
+    "type": "osc",
+    "path": "/mixer/fader1",
+    "values": [
+      { "type": "f", "value": 0.75 }  // Float value
+    ]
+  }
+}
+```
+
+**Value Types:**
+
+OSC supports multiple value types:
+
+- `"i"` - Integer: `{ "type": "i", "value": 42 }`
+- `"f"` - Float: `{ "type": "f", "value": 0.5 }`
+- `"s"` - String: `{ "type": "s", "value": "hello" }`
+- `"b"` - Blob (binary): `{ "type": "b", "value": Uint8Array }`
+- `"T"` - True (boolean): `{ "type": "T", "value": undefined }`
+- `"F"` - False (boolean): `{ "type": "F", "value": undefined }`
+
+**Multiple Values:**
+
+Send multiple values in a single OSC message:
+
+```javascript
+{
+  "content": {
+    "deviceType": 8,
+    "type": "osc",
+    "path": "/mixer/channel/1",
+    "values": [
+      { "type": "f", "value": 0.8 },   // Volume
+      { "type": "i", "value": 1 },     // Channel number
+      { "type": "s", "value": "Main" } // Label
+    ]
+  }
+}
+```
+
+**Transitions with Easing:**
+
+OSC values can transition smoothly over time with easing functions:
+
+```javascript
+{
+  "content": {
+    "deviceType": 8,
+    "type": "osc",
+    "path": "/mixer/fader1",
+    "values": [
+      { "type": "f", "value": 1.0 }  // Target value
+    ],
+    "from": [
+      { "type": "f", "value": 0.0 }  // Starting value
+    ],
+    "transition": {
+      "duration": 2000,  // 2 seconds
+      "type": "Sinusoidal",
+      "direction": "InOut"
+    }
+  }
+}
+```
+
+**Easing Types:**
+
+- `"Linear"` - Constant speed
+- `"Quadratic"`, `"Cubic"`, `"Quartic"`, `"Quintic"` - Polynomial curves
+- `"Sinusoidal"` - Smooth sine wave
+- `"Exponential"` - Rapid acceleration/deceleration
+- `"Circular"` - Circular arc curve
+- `"Elastic"` - Spring-like overshoot
+- `"Back"` - Slight overshoot
+- `"Bounce"` - Bouncing effect
+
+**Easing Directions:**
+
+- `"In"` - Easing at start
+- `"Out"` - Easing at end
+- `"InOut"` - Easing at both start and end
+- `"None"` - No easing (linear)
+
+**Complete OSC Example:**
+
+```javascript
+// Fade audio fader from 0% to 100% over 3 seconds with smooth easing
+{
+  "id": "audio_fade_in",
+  "layer": "osc_audio",
+  "enable": {
+    "start": 0,
+    "duration": 3000
+  },
+  "content": {
+    "deviceType": 8,
+    "type": "osc",
+    "path": "/audio/master/fader",
+    "values": [
+      { "type": "f", "value": 1.0 }
+    ],
+    "from": [
+      { "type": "f", "value": 0.0 }
+    ],
+    "transition": {
+      "duration": 3000,
+      "type": "Sinusoidal",
+      "direction": "InOut"
+    }
+  }
+}
+```
+
 For complete device-specific content properties, refer to the [timeline-state-resolver-types](https://github.com/nrkno/sofie-timeline-state-resolver/tree/master/packages/timeline-state-resolver-types) package.
 
 ### Complete Message Reference
