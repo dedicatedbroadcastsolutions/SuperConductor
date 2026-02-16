@@ -7,6 +7,7 @@ import {
 	DeviceType,
 	OSCDeviceType,
 } from 'timeline-state-resolver'
+import { Mappings, TSRTimeline } from 'timeline-state-resolver-types'
 import { MetadataAny, ResourceAny, TSRDeviceId, unprotectString } from '@shared/models'
 import { BridgeAPI, LoggerLike } from '@shared/api'
 import { CasparCGSideload } from './sideload/CasparCG.js'
@@ -31,6 +32,10 @@ export class TSR {
 
 	private currentTimeDiff = 0
 	private deviceStatus = new Map<TSRDeviceId, DeviceStatus>()
+
+	// Store the current timeline and mappings for reconnection handling
+	private currentTimeline: TSRTimeline = []
+	private currentMappings: Mappings | undefined = undefined
 
 	public deviceOptions = new Map<TSRDeviceId, DeviceOptionsAny>()
 	private _triggerUpdateDevicesCheckAgain = false
@@ -58,12 +63,20 @@ export class TSR {
 			log.debug('TSR', msg, ...args)
 		})
 
-		this.conductor.setTimelineAndMappings([], undefined)
+		this.setTimelineAndMappings([], undefined)
 		this.conductor.init().catch((e) => log.error(stringifyError(e)))
 
 		this.send = () => {
 			throw new Error('TSR.send() not set!')
 		}
+	}
+	/**
+	 * Sets the timeline and mappings on the conductor, storing them for potential reconnection refreshes.
+	 */
+	public setTimelineAndMappings(timeline: TSRTimeline, mappings: Mappings | undefined): void {
+		this.currentTimeline = timeline
+		this.currentMappings = mappings
+		this.conductor.setTimelineAndMappings(timeline, mappings)
 	}
 	/**
 	 * Syncs the currentTime, this is useful when TSR-Bridge runs on another computer than SuperConductor,
@@ -303,9 +316,19 @@ export class TSR {
 		}
 	}
 	private onDeviceStatus(deviceId: TSRDeviceId, status: DeviceStatus) {
+		const previousStatus = this.deviceStatus.get(deviceId)
 		this.deviceStatus.set(deviceId, status)
 
 		this.reportDeviceStatus(deviceId)
+
+		// When a device reconnects (goes from BAD/UNKNOWN to GOOD), refresh the timeline
+		// This ensures playback resumes at the correct position based on the current time
+		if (previousStatus && previousStatus.statusCode !== StatusCode.GOOD && status.statusCode === StatusCode.GOOD) {
+			this.log.info(`Device ${deviceId} reconnected, refreshing timeline`)
+			// Refresh the timeline with the current time
+			// This recalculates the timeline state and ensures playback continues from the correct position
+			this.conductor.setTimelineAndMappings(this.currentTimeline, this.currentMappings)
+		}
 	}
 	private reportDeviceStatus(deviceId: TSRDeviceId) {
 		const status = this.deviceStatus.get(deviceId)

@@ -123,7 +123,7 @@ export class BaseBridge {
 		this.log.info('fullTimeline', JSON.stringify(fullTimeline, undefined, 2))
 		this.log.info('mapping', JSON.stringify(this.mappings, undefined, 2))
 
-		this.tsr.conductor.setTimelineAndMappings(fullTimeline, this.mappings)
+		this.tsr.setTimelineAndMappings(fullTimeline, this.mappings)
 	}
 	private updateTSRDatastore(currentTime: number) {
 		this.tsr.setCurrentTime(currentTime)
