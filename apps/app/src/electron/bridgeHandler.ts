@@ -550,6 +550,8 @@ abstract class AbstractBridgeConnection {
 			this.callbacks.updatedResourcesAndMetadata(msg.deviceId, msg.resources, msg.metadata)
 		} else if (msg.type === 'timelineIds') {
 			this._syncTimelineIds(msg.timelineIds)
+		} else if (msg.type === 'timeline') {
+			// Response to getTimeline - not used by SuperConductor, only by external applications
 		} else if (msg.type === 'PeripheralStatus') {
 			this._onPeripheralStatus(msg.deviceId, msg.info, msg.status)
 		} else if (msg.type === 'PeripheralTrigger') {
