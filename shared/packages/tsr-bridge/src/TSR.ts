@@ -223,14 +223,13 @@ export class TSR {
 	}
 	private async _removeDevice(deviceId: TSRDeviceId): Promise<void> {
 		// Delete the sideloaded device, if any
-		// @ts-expect-error TS2349 - cascading error from earlier code
-		await this._removeSideloadDevice(deviceId)(
-			// HACK: There are some scenarios in which this method will never return.
-			// For example, when trying to remove a CasparCG device that has never connected.
-			// So, to prevent this code from being blocked indefinitely waiting for this promise
-			// to resolve, we instead let it run async.
-			this.conductor as any
-		)
+		await this._removeSideloadDevice(deviceId)
+
+		// HACK: There are some scenarios in which this method will never return.
+		// For example, when trying to remove a CasparCG device that has never connected.
+		// So, to prevent this code from being blocked indefinitely waiting for this promise
+		// to resolve, we instead let it run async.
+		;(this.conductor as any)
 			.removeDevice(unprotectString(deviceId))
 			.catch((e: any) => this.log.error(stringifyError(e)))
 
