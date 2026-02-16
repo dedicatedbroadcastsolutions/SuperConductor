@@ -216,7 +216,9 @@ export class TSR {
 		// For example, when trying to remove a CasparCG device that has never connected.
 		// So, to prevent this code from being blocked indefinitely waiting for this promise
 		// to resolve, we instead let it run async.
-		this.conductor.removeDevice(unprotectString(deviceId)).catch((e) => this.log.error(stringifyError(e)))
+		;(this.conductor as any)
+			.removeDevice(unprotectString(deviceId))
+			.catch((e: unknown) => this.log.error(stringifyError(e)))
 
 		this.devices.delete(deviceId)
 		this.deviceStatus.delete(deviceId)
