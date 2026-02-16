@@ -14,6 +14,7 @@ export namespace BridgeAPI {
 			| DeviceRemoved
 			| UpdatedResourcesAndMetadata
 			| TimelineIds
+			| Timeline
 			| PeripheralStatus
 			| PeripheralTrigger
 			| PeripheralAnalog
@@ -58,6 +59,12 @@ export namespace BridgeAPI {
 			type: 'timelineIds'
 			timelineIds: string[]
 			// A reply to GetTimelineIds
+		}
+		export interface Timeline extends MessageBase {
+			type: 'timeline'
+			timelineId: string
+			timeline: TSRTimeline | null // null if timeline not found
+			// A reply to GetTimeline
 		}
 		export interface PeripheralStatus extends MessageBase {
 			type: 'PeripheralStatus'
@@ -105,6 +112,7 @@ export namespace BridgeAPI {
 			| RemoveTimeline
 			| UpdateDatastore
 			| GetTimelineIds
+			| GetTimeline
 			| SetMappings
 			| RefreshResources
 			| PeripheralSetKeyDisplay
@@ -147,6 +155,11 @@ export namespace BridgeAPI {
 		export interface GetTimelineIds extends MessageBase {
 			type: 'getTimelineIds'
 			// Bridge will reply with "timelineIds"
+		}
+		export interface GetTimeline extends MessageBase {
+			type: 'getTimeline'
+			timelineId: string
+			// Bridge will reply with "timeline"
 		}
 		export interface SetMappings extends MessageBase {
 			type: 'setMappings'

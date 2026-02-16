@@ -178,6 +178,9 @@ export class BaseBridge {
 			this.updateDatastore(msg.updates, msg.currentTime)
 		} else if (msg.type === 'getTimelineIds') {
 			this.send({ type: 'timelineIds', timelineIds: Object.keys(this.storedTimelines) })
+		} else if (msg.type === 'getTimeline') {
+			const timeline = this.storedTimelines[msg.timelineId] ?? null
+			this.send({ type: 'timeline', timelineId: msg.timelineId, timeline })
 		} else if (msg.type === 'setMappings') {
 			this.updateMappings(msg.mappings, msg.currentTime)
 		} else if (msg.type === 'setSettings') {
