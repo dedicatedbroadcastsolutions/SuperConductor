@@ -164,6 +164,52 @@ Add a timeline to be played by TSR:
 
 The `currentTime` parameter (Unix timestamp in milliseconds) synchronizes the bridge's clock with your application. This is critical for scheduled playback. TSR Bridge calculates a time offset and uses `getCurrentTime()` internally to ensure accurate playback timing.
 
+#### How Time Synchronization Works
+
+TSR Bridge maintains a time offset calculated as: `offset = receivedCurrentTime - Date.now()`. All timeline calculations use `Date.now() + offset` to determine what should be playing at any given moment.
+
+#### Updating Current Time
+
+You can update the time synchronization by sending `currentTime` with any of these messages:
+
+- `addTimeline` - Add/update a timeline and sync time
+- `removeTimeline` - Remove a timeline and sync time
+- `setMappings` - Update mappings and sync time
+- `updateDatastore` - Update datastore and sync time
+
+**Example: Sync time without changing timeline:**
+
+```json
+{
+	"type": "setMappings",
+	"mappings": {},
+	"currentTime": 1708070400000
+}
+```
+
+This sends empty/unchanged mappings but updates the time offset. If you already have mappings configured, send the same mappings object to avoid clearing them.
+
+**Better approach: Use updateDatastore:**
+
+```json
+{
+	"type": "updateDatastore",
+	"updates": [],
+	"currentTime": 1708070400000
+}
+```
+
+Sending an empty `updates` array has no side effects and only updates time synchronization.
+
+#### When to Update Time
+
+- **Initial setup**: Send with your first `addTimeline` or `setMappings`
+- **Periodic sync**: Every 30-60 seconds to compensate for clock drift between machines
+- **After reconnection**: If your application disconnects and reconnects
+- **Time-critical operations**: Before scheduled events to ensure accuracy
+
+**Note**: Time synchronization is cumulative - each `currentTime` received replaces the previous offset. There's no need to send continuous updates unless you need high precision across different machines or after long periods of inactivity.
+
 ### Monitoring Device Status
 
 TSR Bridge automatically sends device status updates:
@@ -261,6 +307,189 @@ Query available resources (media files, templates, etc.) from devices:
 	"metadata": {}
 }
 ```
+
+### Timeline Object Properties
+
+Timeline objects are the core building blocks sent to TSR Bridge. Each object defines what should happen, when, and on which device output.
+
+#### Required Properties
+
+**`id`** (string): Unique identifier for this timeline object
+
+```javascript
+id: 'obj0'
+```
+
+**`layer`** (string): Maps to a device output via mappings. Must match a mapping key.
+
+```javascript
+layer: 'caspar_player0'
+```
+
+**`enable`** (object | array): Defines when/how the object is active. Can be a single enable object or array of enable objects.
+
+Enable object properties:
+
+- `start` (number | string): When to start (Unix timestamp or expression like `#other_id.end`)
+- `end` (number | string): When to end (Unix timestamp or expression)
+- `duration` (number): How long to play (milliseconds)
+- `while` (string | number): Condition expression (e.g., `1` = always, `#other_id` = while other exists)
+- `repeating` (number): Repeat interval (milliseconds)
+
+```javascript
+// Absolute time
+enable: { start: 1708070400000, duration: 5000 }
+
+// Relative to another object
+enable: { start: "#obj1.end + 1000", duration: 3000 }
+
+// Infinite duration
+enable: { start: 1708070400000 }
+
+// While condition
+enable: { while: "#background_obj" }
+
+// Multiple enable conditions
+enable: [
+  { start: 1708070400000, end: 1708070405000 },
+  { start: 1708070410000, duration: 5000 }
+]
+```
+
+**`content`** (object): Device-specific content. Always includes `deviceType` and varies by device.
+
+Common device types:
+
+- `0` = CasparCG
+- `1` = ATEM
+- `5` = TCPSend
+- `6` = Hyperdeck
+- `8` = OSC
+- `15` = VMix
+- `16` = OBS
+- `19` = TriCaster
+
+```javascript
+// CasparCG media file
+content: {
+  deviceType: 0,
+  type: 1, // MEDIA
+  file: "my-video.mp4",
+  loop: false
+}
+
+// ATEM mix effect
+content: {
+  deviceType: 1,
+  type: 0, // ME
+  me: {
+    input: 1,
+    transition: 0 // CUT
+  }
+}
+```
+
+#### Optional Properties
+
+**`priority`** (number): Layering priority. Higher numbers take precedence when multiple objects are on the same layer. Default: 0
+
+```javascript
+priority: 5
+```
+
+**`classes`** (string[]): CSS-like classes for organization and grouping
+
+```javascript
+classes: ['graphics', 'lower-third']
+```
+
+**`disabled`** (boolean): Temporarily disable without removing. Default: false
+
+```javascript
+disabled: true
+```
+
+**`seamless`** (boolean): For CasparCG, attempt seamless transitions. Default: false
+
+```javascript
+seamless: true
+```
+
+**`isGroup`** (boolean): Indicates if this object is a container for child objects. Default: false
+
+```javascript
+isGroup: true
+```
+
+**`children`** (array): Child timeline objects that inherit timing from parent
+
+```javascript
+children: [
+	{
+		id: 'child1',
+		layer: 'layer1',
+		enable: { start: 0 }, // Relative to parent start
+		content: {
+			/* ... */
+		},
+	},
+]
+```
+
+#### Complete Timeline Object Example
+
+```javascript
+{
+  "id": "main_video",
+  "layer": "caspar_player0",
+  "enable": {
+    "start": 1708070400000,
+    "duration": 30000
+  },
+  "priority": 1,
+  "classes": ["main-content"],
+  "content": {
+    "deviceType": 0,
+    "type": 1,
+    "file": "intro.mp4",
+    "loop": false,
+    "seek": 0,
+    "inPoint": 0,
+    "length": 30000
+  },
+  "isGroup": false,
+  "children": [
+    {
+      "id": "graphics_overlay",
+      "layer": "caspar_gfx0",
+      "enable": {
+        "start": 5000,  // 5 seconds after parent starts
+        "duration": 10000
+      },
+      "content": {
+        "deviceType": 0,
+        "type": 2,  // TEMPLATE
+        "name": "lower_third",
+        "data": {
+          "f0": "John Doe",
+          "f1": "CEO"
+        }
+      }
+    }
+  ]
+}
+```
+
+#### Timeline Resolution
+
+TSR uses the [Superfly Timeline](https://github.com/SuperFlyTV/supertimeline) library to resolve timeline objects. This means:
+
+- **Expression support**: Enable times can reference other objects (`#other_id.start + 1000`)
+- **Conflict resolution**: Priority determines which object wins when multiple objects target the same layer
+- **Automatic timing**: Child objects inherit parent timing
+- **While conditions**: Objects can exist conditionally based on other objects
+
+For more details on timeline expressions and resolution, see the [Superfly Timeline documentation](https://github.com/SuperFlyTV/supertimeline).
 
 ### Complete Message Reference
 
