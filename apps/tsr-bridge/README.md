@@ -544,12 +544,15 @@ Keyframe object structure:
 
 #### Device-Specific Content Properties
 
-Note: TSR Bridge only documents properties that are recognized by the bridge. Properties like `seek`, `pauseTime`, or `playing` are not supported content fields in this app and are intentionally omitted from examples.
+Note: TSR Bridge forwards device-specific content fields to TSR. The fields below are supported for CasparCG media and are optional.
 
 Some devices support additional content properties beyond the standard configuration:
 
 **CasparCG Media (`deviceType: CASPARCG, type: media`)**
 
+- `playing` (boolean): Controls play/pause. `false` issues a CasparCG pause (freeze current frame). Transitioning from `false` to `true` resumes playback.
+- `seek` (number): Explicit seek position in milliseconds. When combined with `playing: true`, TSR seeks before/while playing. Useful for preview play/resume without absolute timestamps.
+- `pauseTime` (number): Frozen frame position in milliseconds. When `playing: false`, TSR seeks to `pauseTime` and pauses immediately (useful for scrub/shuttle).
 - `noStarttime` (boolean): If true, prevents TSR from seeking to the correct position when starting playback. Useful when you want media to play from the beginning regardless of timeline position. Default: false
 
 ```javascript
@@ -563,6 +566,30 @@ Some devices support additional content properties beyond the standard configura
     "file": "background.mp4",
     "noStarttime": true  // Play from start, don't seek based on timeline position
   }
+}
+```
+
+```javascript
+// Pause at an explicit frame (scrub/shuttle)
+{
+	"content": {
+		"deviceType": "CASPARCG",
+		"type": "media",
+		"file": "background.mp4",
+		"playing": false,
+		"pauseTime": 1250
+	}
+}
+
+// Resume from a specific position
+{
+	"content": {
+		"deviceType": "CASPARCG",
+		"type": "media",
+		"file": "background.mp4",
+		"playing": true,
+		"seek": 1250
+	}
 }
 ```
 
@@ -808,7 +835,7 @@ ws.on('message', (data) => {
 				type: 'setSettings',
 				devices: {
 					casparcg0: {
-						type: 0,
+						type: 'CASPARCG',
 						options: { host: '127.0.0.1', port: 5250 },
 					},
 				},
@@ -823,7 +850,7 @@ ws.on('message', (data) => {
 				type: 'setMappings',
 				mappings: {
 					layer0: {
-						device: 0,
+						device: 'CASPARCG',
 						deviceId: 'casparcg0',
 						options: {
 							mappingType: 'layer',
@@ -848,7 +875,7 @@ ws.on('message', (data) => {
 						layer: 'layer0',
 						content: {
 							deviceType: 'CASPARCG',
-							type: 1,
+							type: 'media',
 							file: 'AMB',
 						},
 					},
