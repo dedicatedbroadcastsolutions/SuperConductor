@@ -121,7 +121,7 @@ export class TSR {
 			if (!existingDevice || !isEqual(existingDevice.options, newDeviceOptions)) {
 				if (existingDevice) {
 					existingDevice.abortController.abort()
-					await this.conductor.removeDevice(unprotectString(deviceId))
+					await (this.conductor as any).removeDevice(unprotectString(deviceId))
 				}
 				await this._removeSideloadDevice(deviceId)
 
@@ -139,7 +139,7 @@ export class TSR {
 					this.sideLoadDevice(deviceId, newDeviceOptions)
 
 					// Create the device, but don't initialize it:
-					const devicePr = this.conductor.createDevice(unprotectString(deviceId), newDeviceOptions, {
+					const devicePr = (this.conductor as any).createDevice(unprotectString(deviceId), newDeviceOptions, {
 						signal: abortController.signal,
 					})
 
@@ -151,7 +151,7 @@ export class TSR {
 
 					const device = await devicePr
 
-					await device.device.on('connectionChanged', (...args) => {
+					device.device.on('connectionChanged', (...args: unknown[]) => {
 						// TODO: figure out why the arguments to this event callback lost the correct typings
 						const status = args[0] as DeviceStatus
 						this.onDeviceStatus(deviceId, status)
@@ -178,13 +178,13 @@ export class TSR {
 						)
 					}
 
-					await device.device.on('debug', (...args: any[]) => {
+					device.device.on('debug', (...args: any[]) => {
 						const data = args.map((arg) => (typeof arg === 'object' ? JSON.stringify(arg) : arg))
 						this.log.debug(`Device "${device.deviceName || deviceId}" (${device.instanceId})`, { data })
 					})
 
 					// now initialize it
-					await this.conductor.initDevice(unprotectString(deviceId), newDeviceOptions, undefined, {
+					await (this.conductor as any).initDevice(unprotectString(deviceId), newDeviceOptions, undefined, {
 						signal: abortController.signal,
 					})
 
