@@ -2,7 +2,7 @@ import React, { useCallback } from 'react'
 import { ParsedValueInput } from './parsedValueInput.js'
 export const TextInput: React.FC<
 	| {
-			currentValue: string
+			currentValue: string | any // Allow template strings and other expression types
 			indeterminate?: boolean
 			onChange: (newValue: string) => void
 			allowUndefined: false
@@ -17,7 +17,7 @@ export const TextInput: React.FC<
 			focusTooltip?: string
 	  }
 	| {
-			currentValue: string | undefined
+			currentValue: string | undefined | any // Allow template strings and other expression types
 			indeterminate?: boolean
 			onChange: (newValue: string | undefined) => void
 			allowUndefined: true
