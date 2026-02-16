@@ -325,6 +325,9 @@ export class TSR {
 		// This ensures playback resumes at the correct position based on the current time
 		if (previousStatus && previousStatus.statusCode !== StatusCode.GOOD && status.statusCode === StatusCode.GOOD) {
 			this.log.info(`Device ${deviceId} reconnected, refreshing timeline`)
+			// Reset the resolver to force timeline resolution at the current point in time
+			// This clears any cached state and ensures devices calculate the correct playback position
+			this.conductor.resetResolver()
 			// Refresh the timeline with the current time
 			// This recalculates the timeline state and ensures playback continues from the correct position
 			this.conductor.setTimelineAndMappings(this.currentTimeline, this.currentMappings)
