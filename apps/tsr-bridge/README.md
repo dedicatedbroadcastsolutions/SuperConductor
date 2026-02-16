@@ -105,7 +105,7 @@ Note: To determine the valid string values, use the `DeviceType` enum from `time
 
 Mappings define how timeline layers map to device outputs:
 
-Note: `mappingType` accepts string enum names (for example, `mixEffect`, `program`, `input`) from `timeline-state-resolver-types`. Numeric values are legacy and still accepted for backward compatibility. Use the mapping enums for the device (for example, `MappingAtemType`, `MappingVmixType`, `MappingObsType`) to see valid string values.
+Note: `mappingType` accepts string enum names (for example, `mixEffect`, `program`, `input`) from `timeline-state-resolver-types`. Numeric values are legacy and still accepted for backward compatibility. Use the mapping enums for the device (for example, `MappingAtemType`, `MappingVmixType`, `MappingObsType`) to see valid string values. For CasparCG, the enum value is `layer` (lowercase) and casing is significant.
 
 **Send `setMappings` message:**
 
@@ -551,9 +551,44 @@ Some devices support additional content properties beyond the standard configura
 **CasparCG Media (`deviceType: CASPARCG, type: media`)**
 
 - `playing` (boolean): Controls play/pause. `false` issues a CasparCG pause (freeze current frame). Transitioning from `false` to `true` resumes playback.
-- `seek` (number): Explicit seek position in milliseconds. When combined with `playing: true`, TSR seeks before/while playing. Useful for preview play/resume without absolute timestamps.
-- `pauseTime` (number): Frozen frame position in milliseconds. When `playing: false`, TSR seeks to `pauseTime` and pauses immediately (useful for scrub/shuttle).
+- `seek` (number): Explicit seek offset in milliseconds. When `noStarttime` is `false`, TSR adds the auto-computed play position to `seek`. When `noStarttime` is `true`, TSR uses `seek` as the absolute position.
+- `pauseTime` (number): Used to calculate the paused time position. While `playing: false`, TSR issues a pause; if you need to scrub to a new frame, include `seek` (and, if needed, toggle `playing`) to force a seek/update.
 - `noStarttime` (boolean): If true, prevents TSR from seeking to the correct position when starting playback. Useful when you want media to play from the beginning regardless of timeline position. Default: false
+
+Behavior notes (CasparCG media):
+
+- Updating `pauseTime` while `playing: false` does not by itself force a seek; TSR compares `pauseTime`, but the pause command does not include a seek parameter. To scrub to a new frame, update `seek` and/or toggle `playing` to trigger a new play/seek or load.
+- With `noStarttime: false`, `seek` is treated as a base offset and TSR adds the auto-computed position (now - start). With `noStarttime: true`, `seek` is treated as the absolute position.
+- When a clip becomes active mid-play, TSR computes the elapsed time since `enable.start` and issues a play with a computed seek offset rather than starting from the beginning.
+- There is no explicit "force" flag in the bridge API; to force a new command, change a property that affects diffing (for example `seek`, `playing`, `media`, or timing), rather than relying on a new object id alone.
+
+Scrub sequence example (explicitly seek while paused):
+
+```javascript
+// Initial pause at a known position
+{
+	"content": {
+		"deviceType": "CASPARCG",
+		"type": "media",
+		"file": "background.mp4",
+		"playing": false,
+		"seek": 1000,
+		"pauseTime": 1000
+	}
+}
+
+// Scrub to a new frame while still paused (update seek)
+{
+	"content": {
+		"deviceType": "CASPARCG",
+		"type": "media",
+		"file": "background.mp4",
+		"playing": false,
+		"seek": 5000,
+		"pauseTime": 5000
+	}
+}
+```
 
 ```javascript
 {
