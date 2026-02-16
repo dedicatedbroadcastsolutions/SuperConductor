@@ -1058,8 +1058,6 @@ export function getDefaultDeviceName(deviceType: DeviceType): string {
 			return 'TriCaster'
 		case DeviceType.MULTI_OSC:
 			return 'Multi OSC'
-		case DeviceType.VISCA_OVER_IP:
-			return 'VISCA over IP'
 		default:
 			assertNever(deviceType)
 	}
@@ -1202,9 +1200,6 @@ export function describeMappingConfiguration(mapping: Mapping<TSRMappingOptions>
 			return ''
 		}
 		case DeviceType.MULTI_OSC: {
-			return ''
-		}
-		case DeviceType.VISCA_OVER_IP: {
 			return ''
 		}
 		default:
@@ -1490,15 +1485,6 @@ export function getDefaultMappingForDeviceType(
 		})
 		m.layerName = getDefaultLayerName(m)
 		return m
-	} else if (deviceType === DeviceType.VISCA_OVER_IP) {
-		const m = literal<Mapping<any>>({
-			device: deviceType,
-			deviceId: deviceIdStr,
-			layerName: '', // Set later
-			options: {},
-		})
-		m.layerName = getDefaultLayerName(m)
-		return m
 	} else {
 		assertNever(deviceType)
 		const m = literal<Mapping<any>>({
@@ -1568,8 +1554,6 @@ export function getDefaultLayerName(mapping: Mapping<TSRMappingOptions>): string
 		return `TriCaster`
 	} else if (mapping.device === DeviceType.MULTI_OSC) {
 		return `Multi OSC`
-	} else if (mapping.device === DeviceType.VISCA_OVER_IP) {
-		return `VISCA over IP`
 	} else {
 		assertNever(mapping.device)
 		return 'N/A'
@@ -1739,8 +1723,6 @@ export function sortMappings(mappings: Mappings<TSRMappingOptions>): SortedMappi
 				if (_a.mappingType < _b.mappingType) return -1
 				return compareStringsEndingWithNumber(_a.name ?? '', _b.name ?? '') // TODO: find a better alternative
 			} else if (device === DeviceType.MULTI_OSC) {
-				// Nothing
-			} else if (device === DeviceType.VISCA_OVER_IP) {
 				// Nothing
 			} else {
 				assertNever(device)

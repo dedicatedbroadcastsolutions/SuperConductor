@@ -7,7 +7,6 @@ import {
 	DeviceType,
 	OSCDeviceType,
 } from 'timeline-state-resolver'
-import { Mappings, TSRTimeline } from 'timeline-state-resolver-types'
 import { MetadataAny, ResourceAny, TSRDeviceId, unprotectString } from '@shared/models'
 import { BridgeAPI, LoggerLike } from '@shared/api'
 import { CasparCGSideload } from './sideload/CasparCG.js'
@@ -32,10 +31,6 @@ export class TSR {
 
 	private currentTimeDiff = 0
 	private deviceStatus = new Map<TSRDeviceId, DeviceStatus>()
-
-	// Store the current timeline and mappings for reconnection handling
-	private currentTimeline: TSRTimeline = []
-	private currentMappings: Mappings | undefined = undefined
 
 	public deviceOptions = new Map<TSRDeviceId, DeviceOptionsAny>()
 	private _triggerUpdateDevicesCheckAgain = false
@@ -63,20 +58,12 @@ export class TSR {
 			log.debug('TSR', msg, ...args)
 		})
 
-		this.setTimelineAndMappings([], undefined)
+		this.conductor.setTimelineAndMappings([], undefined)
 		this.conductor.init().catch((e) => log.error(stringifyError(e)))
 
 		this.send = () => {
 			throw new Error('TSR.send() not set!')
 		}
-	}
-	/**
-	 * Sets the timeline and mappings on the conductor, storing them for potential reconnection refreshes.
-	 */
-	public setTimelineAndMappings(timeline: TSRTimeline, mappings: Mappings | undefined): void {
-		this.currentTimeline = timeline
-		this.currentMappings = mappings
-		this.conductor.setTimelineAndMappings(timeline, mappings)
 	}
 	/**
 	 * Syncs the currentTime, this is useful when TSR-Bridge runs on another computer than SuperConductor,
@@ -134,7 +121,7 @@ export class TSR {
 			if (!existingDevice || !isEqual(existingDevice.options, newDeviceOptions)) {
 				if (existingDevice) {
 					existingDevice.abortController.abort()
-					await (this.conductor as any).removeDevice(unprotectString(deviceId))
+					await this.conductor.removeDevice(unprotectString(deviceId))
 				}
 				await this._removeSideloadDevice(deviceId)
 
@@ -152,7 +139,7 @@ export class TSR {
 					this.sideLoadDevice(deviceId, newDeviceOptions)
 
 					// Create the device, but don't initialize it:
-					const devicePr = (this.conductor as any).createDevice(unprotectString(deviceId), newDeviceOptions, {
+					const devicePr = this.conductor.createDevice(unprotectString(deviceId), newDeviceOptions, {
 						signal: abortController.signal,
 					})
 
@@ -164,7 +151,7 @@ export class TSR {
 
 					const device = await devicePr
 
-					device.device.on('connectionChanged', (...args: any[]) => {
+					await device.device.on('connectionChanged', (...args) => {
 						// TODO: figure out why the arguments to this event callback lost the correct typings
 						const status = args[0] as DeviceStatus
 						this.onDeviceStatus(deviceId, status)
@@ -191,13 +178,13 @@ export class TSR {
 						)
 					}
 
-					device.device.on('debug', (...args: any[]) => {
+					await device.device.on('debug', (...args: any[]) => {
 						const data = args.map((arg) => (typeof arg === 'object' ? JSON.stringify(arg) : arg))
 						this.log.debug(`Device "${device.deviceName || deviceId}" (${device.instanceId})`, { data })
 					})
 
 					// now initialize it
-					await (this.conductor as any).initDevice(unprotectString(deviceId), newDeviceOptions, undefined, {
+					await this.conductor.initDevice(unprotectString(deviceId), newDeviceOptions, undefined, {
 						signal: abortController.signal,
 					})
 
@@ -229,9 +216,7 @@ export class TSR {
 		// For example, when trying to remove a CasparCG device that has never connected.
 		// So, to prevent this code from being blocked indefinitely waiting for this promise
 		// to resolve, we instead let it run async.
-		;(this.conductor as any)
-			.removeDevice(unprotectString(deviceId))
-			.catch((e: any) => this.log.error(stringifyError(e)))
+		this.conductor.removeDevice(unprotectString(deviceId)).catch((e) => this.log.error(stringifyError(e)))
 
 		this.devices.delete(deviceId)
 		this.deviceStatus.delete(deviceId)
@@ -318,22 +303,9 @@ export class TSR {
 		}
 	}
 	private onDeviceStatus(deviceId: TSRDeviceId, status: DeviceStatus) {
-		const previousStatus = this.deviceStatus.get(deviceId)
 		this.deviceStatus.set(deviceId, status)
 
 		this.reportDeviceStatus(deviceId)
-
-		// When a device reconnects (goes from BAD/UNKNOWN to GOOD), refresh the timeline
-		// This ensures playback resumes at the correct position based on the current time
-		if (previousStatus && previousStatus.statusCode !== StatusCode.GOOD && status.statusCode === StatusCode.GOOD) {
-			this.log.info(`Device ${deviceId} reconnected, refreshing timeline`)
-			// Reset the resolver to force timeline resolution at the current point in time
-			// This clears any cached state and ensures devices calculate the correct playback position
-			this.conductor.resetResolver()
-			// Refresh the timeline with the current time
-			// This recalculates the timeline state and ensures playback continues from the correct position
-			this.conductor.setTimelineAndMappings(this.currentTimeline, this.currentMappings)
-		}
 	}
 	private reportDeviceStatus(deviceId: TSRDeviceId) {
 		const status = this.deviceStatus.get(deviceId)
