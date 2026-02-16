@@ -491,6 +491,97 @@ TSR uses the [Superfly Timeline](https://github.com/SuperFlyTV/supertimeline) li
 
 For more details on timeline expressions and resolution, see the [Superfly Timeline documentation](https://github.com/SuperFlyTV/supertimeline).
 
+#### Advanced Timeline Properties
+
+**`keyframes`** (array): Modifies content over time without creating separate timeline objects. Each keyframe can override content properties during its active period.
+
+Keyframe object structure:
+
+- `id` (string): Unique identifier for this keyframe
+- `enable` (object | array): When this keyframe is active (relative to parent object)
+- `duration` (number | string): Optional duration override
+- `classes` (string[]): Optional classes for organization
+- `content` (object): Partial content to override during this keyframe
+- `disabled` (boolean): Temporarily disable this keyframe
+
+```javascript
+{
+  "id": "gfx_anim",
+  "layer": "caspar_gfx0",
+  "enable": { "start": 0, "duration": 10000 },
+  "content": {
+    "deviceType": 0,
+    "type": 2,
+    "name": "lower_third",
+    "data": { "opacity": 0 }
+  },
+  "keyframes": [
+    {
+      "id": "fade_in",
+      "enable": { "start": 0, "duration": 500 },
+      "content": { "data": { "opacity": 100 } }
+    },
+    {
+      "id": "fade_out",
+      "enable": { "start": 9500, "duration": 500 },
+      "content": { "data": { "opacity": 0 } }
+    }
+  ]
+}
+```
+
+**`isLookahead`** (boolean): Internal TSR property indicating this object was inserted by lookahead. Generally not set by external applications. Default: false
+
+**`lookaheadForLayer`** (string | number): When `isLookahead` is true, indicates which layer this lookahead object belongs to.
+
+#### Device-Specific Content Properties
+
+Some devices support additional content properties beyond the standard configuration:
+
+**CasparCG Media (`deviceType: 0, type: 1`)**
+
+- `noStarttime` (boolean): If true, prevents TSR from seeking to the correct position when starting playback. Useful when you want media to play from the beginning regardless of timeline position. Default: false
+
+```javascript
+{
+  "id": "video_no_seek",
+  "layer": "caspar_player0",
+  "enable": { "start": 5000, "duration": 30000 },
+  "content": {
+    "deviceType": 0,
+    "type": 1,
+    "file": "background.mp4",
+    "noStarttime": true  // Play from start, don't seek based on timeline position
+  }
+}
+```
+
+**CasparCG Transitions**
+
+When using CasparCG content, you can define transitions via the `transitions` property in content:
+
+```javascript
+{
+  "content": {
+    "deviceType": 0,
+    "type": 1,
+    "file": "video.mp4",
+    "transitions": {
+      "inTransition": {
+        "type": "MIX",
+        "duration": 500
+      },
+      "outTransition": {
+        "type": "WIPE",
+        "duration": 1000
+      }
+    }
+  }
+}
+```
+
+For complete device-specific content properties, refer to the [timeline-state-resolver-types](https://github.com/nrkno/sofie-timeline-state-resolver/tree/master/packages/timeline-state-resolver-types) package.
+
 ### Complete Message Reference
 
 #### Messages FROM Bridge (received by your application):
