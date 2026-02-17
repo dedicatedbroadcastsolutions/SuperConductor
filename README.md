@@ -74,6 +74,30 @@ Assign keys on Stream&nbsp;Deck or X-keys to playout actions.
 
 ![Stream Deck GUI](/doc/img/streamdeck-GUI.gif) ![Stream Deck](/doc/img/streamdeck.gif)
 
+## Web GUI
+
+SuperConductor includes an optional web-based GUI that can be opened in a browser. The same interface is available in both the desktop app and the Web UI.
+
+### How to access the Web UI
+
+- **Default port**: `5500`
+- **From the same machine**: open `http://localhost:5500/gui/` in your browser.
+- **From another machine on the network**: open `http://<server-ip>:5500/gui/`, where `<server-ip>` is the IP address of the machine running SuperConductor (e.g. `http://192.168.1.10:5500/gui/`).
+- **From the desktop app**: use the **“Open Web Interface”** menu item to open the default browser to the correct URL.
+
+### Local vs remote access
+
+The internal web server binds to **all network interfaces** (`0.0.0.0`) by default, so the Web UI is reachable from other machines on your network. This applies to both packaged (release) and development builds.
+
+- **Firewall**: ensure port `5500` is allowed for incoming connections if you need remote access.
+- **Restrict to localhost**: to allow only the same machine to access the Web UI (e.g. for security or development), set the environment variable `SC_GUI_BIND_LOCALHOST=1` before starting SuperConductor. The server will then bind to `127.0.0.1` only.
+
+### Notes for running the Web GUI
+
+- Use the full path including the trailing slash: `/gui/` (e.g. `http://localhost:5500/gui/`) so assets load correctly.
+- The Web UI uses the same API and WebSocket connection as the desktop app; the machine running SuperConductor must be reachable on port `5500` from the browser.
+- CORS is configured to allow browser clients from any origin; the API and real-time updates work when the browser is on another machine.
+
 ## HTTP API
 
 SuperConductor currently has a limited, internal, and unstable HTTP API. We plan to add a public and stable HTTP API with proper documentation in the future, but for now this internal API is available by default at `http://127.0.0.1:5500/api/internal`. The port can be changed by passing `--internal-http-api-port XXXX` as an argument to SuperConductor. This API can be disabled by passing the `--disable-internal-http-api` argument.
