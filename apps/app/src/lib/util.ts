@@ -600,9 +600,6 @@ export function allowAddingResourceToLayer(
 	} else if (mapping.device === DeviceType.MULTI_OSC) {
 		// @TODO
 		return false
-	} else if (mapping.device === DeviceType.VISCA_OVER_IP) {
-		// @TODO
-		return false
 	} else {
 		assertNever(mapping.device)
 	}

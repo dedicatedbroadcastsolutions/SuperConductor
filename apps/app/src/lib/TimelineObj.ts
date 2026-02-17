@@ -254,8 +254,7 @@ export function describeTimelineObject(
 			}
 		}
 	} else if (obj.content.deviceType === DeviceType.HTTPSEND) {
-		const url = typeof obj.content.url === 'string' ? obj.content.url : obj.content.url.key
-		label = `${obj.content.type.toUpperCase()} ${url}`
+		label = `${obj.content.type.toUpperCase()} ${obj.content.url}`
 	} else if (obj.content.deviceType === DeviceType.HYPERDECK) {
 		if (obj.content.status === TransportStatus.PLAY) {
 			if (obj.content.clipId === null) {
