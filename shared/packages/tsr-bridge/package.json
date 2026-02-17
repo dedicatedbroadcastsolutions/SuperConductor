@@ -34,7 +34,7 @@
 		"cheerio": "^1.0.0",
 		"lodash-es": "^4.17.21",
 		"recursive-readdir": "^2.2.3",
-		"timeline-state-resolver": "github:dedicatedbroadcastsolutions/sofie-timeline-state-resolver#fix/casparcg_reconnect_resolve_51",
+		"timeline-state-resolver": "^9.2.0",
 		"winston": "^3.15.0"
 	},
 	"devDependencies": {
