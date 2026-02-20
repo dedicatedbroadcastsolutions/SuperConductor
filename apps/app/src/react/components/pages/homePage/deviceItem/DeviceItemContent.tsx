@@ -27,6 +27,7 @@ export const DeviceItemContent: React.FC<{
 	const [host, setHost] = useState('')
 	const [port, setPort] = useState(MIN_PORT)
 	const [password, setPassword] = useState('')
+	const [fps, setFps] = useState<number | ''>('')
 	const deviceSettings = bridge.settings.devices[unprotectString<TSRDeviceId>(deviceId)]
 
 	const handleDeviceNameChange = useCallback(
@@ -86,6 +87,23 @@ export const DeviceItemContent: React.FC<{
 		[deviceSettings, handleError, ipcServer, project]
 	)
 
+	const handleFpsChange = useCallback(
+		(newFps: number | '') => {
+			if (!deviceSettings || deviceSettings.type !== DeviceType.CASPARCG) {
+				return
+			}
+
+			const options = deviceSettings.options as CasparCGOptions
+			if (newFps === '') {
+				delete options.fps
+			} else {
+				options.fps = newFps
+			}
+			ipcServer.updateProject({ id: project.id, project }).catch(handleError)
+		},
+		[deviceSettings, handleError, ipcServer, project]
+	)
+
 	const removeDevice = useCallback(() => {
 		delete bridge.settings.devices[unprotectString<TSRDeviceId>(deviceId)]
 		ipcServer.updateProject({ id: project.id, project }).catch(handleError)
@@ -99,6 +117,12 @@ export const DeviceItemContent: React.FC<{
 		const deviceOptions = deviceSettings?.options as CasparCGOptions | AtemOptions
 		setHost(deviceOptions?.host ?? '')
 		setPort(deviceOptions?.port ?? MIN_PORT)
+		if (deviceSettings?.type === DeviceType.CASPARCG) {
+			const casparOptions = deviceSettings.options as CasparCGOptions
+			setFps(casparOptions?.fps ?? '')
+		} else {
+			setFps('')
+		}
 
 		if (deviceSettings?.type === DeviceType.OBS) {
 			setPassword(deviceSettings.options?.password ?? '')
@@ -186,6 +210,31 @@ export const DeviceItemContent: React.FC<{
 								}}
 							/>
 						</div>
+						{deviceSettings.type === DeviceType.CASPARCG && (
+							<div className="form-control">
+								<TextField
+									label="FPS"
+									value={fps}
+									size="small"
+									margin="dense"
+									type="number"
+									InputProps={{ inputProps: { min: 1, max: 120, step: 0.01 } }}
+									onChange={(event) => {
+										const parsed = event.target.value === '' ? '' : parseFloat(event.target.value)
+										setFps(Number.isNaN(parsed) ? '' : parsed)
+									}}
+									onBlur={() => {
+										handleFpsChange(fps)
+									}}
+									onKeyUp={(e) => {
+										if (e.key === 'Enter') {
+											handleFpsChange(fps)
+											;(document.activeElement as HTMLInputElement).blur()
+										}
+									}}
+								/>
+							</div>
+						)}
 					</>
 				)}
 				{deviceSettings.type === DeviceType.OBS ? (
