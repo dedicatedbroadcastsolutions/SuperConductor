@@ -154,7 +154,7 @@ export class TSR {
 					if (newDeviceOptions.type === DeviceType.CASPARCG) {
 						const originalPrepare = device.device.prepareForHandleState?.bind(device.device)
 						if (originalPrepare) {
-							device.device.prepareForHandleState = async (newStateTime: number, ...args: any[]) => {
+							device.device.prepareForHandleState = async (newStateTime: number) => {
 								const now = this.getCurrentTime()
 								this.log.info('TSR resync prepare', {
 									deviceId,
@@ -162,7 +162,7 @@ export class TSR {
 									now,
 									diff: newStateTime - now,
 								})
-								return originalPrepare(newStateTime, ...args)
+								return originalPrepare(newStateTime)
 							}
 						}
 
