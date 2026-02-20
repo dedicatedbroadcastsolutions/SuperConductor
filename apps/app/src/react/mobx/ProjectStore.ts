@@ -4,6 +4,7 @@ import { PeripheralArea } from '../../models/project/Peripheral.js'
 import { BridgeId, PeripheralId } from '@shared/api'
 import { protectString } from '@shared/models'
 import { Bridge, BridgePeripheralSettings } from '../../models/project/Bridge.js'
+import { shouldLogPerf } from '../lib/perf.js'
 
 /**
  * Information about currently opened project.
@@ -48,7 +49,7 @@ export class ProjectStore {
 		this._updateAssignedAreas()
 
 		const elapsedMs = Math.round(performance.now() - start)
-		if (elapsedMs >= 50) {
+		if (shouldLogPerf(elapsedMs, 50)) {
 			console.info('[perf] projectStore.update', {
 				elapsedMs,
 				bridges: Object.keys(project.bridges).length,

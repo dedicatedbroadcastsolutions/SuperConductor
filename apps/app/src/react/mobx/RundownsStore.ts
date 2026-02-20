@@ -22,6 +22,7 @@ import { ActionAny, RundownActionLight } from '../../lib/triggers/action.js'
 import { isEqual } from 'lodash-es'
 import { TimelineObj } from '../../models/rundown/TimelineObj.js'
 import { assertNever } from '@shared/lib'
+import { shouldLogPerf } from '../lib/perf.js'
 
 interface IRundownsItems {
 	[fileName: string]: IRundownsItem
@@ -124,7 +125,7 @@ export class RundownsStore {
 			})
 		})
 		const elapsedMs = Math.round(performance.now() - start)
-		if (elapsedMs >= 100) {
+		if (shouldLogPerf(elapsedMs, 100)) {
 			console.info('[perf] updateRundown', {
 				elapsedMs,
 				groupCount,

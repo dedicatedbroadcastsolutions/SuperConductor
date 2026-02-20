@@ -11,6 +11,7 @@ import {
 } from '@shared/models'
 import { ClientSideLogger } from '../api/logger.js'
 import { hashObj } from '../../lib/util.js'
+import { shouldLogPerf } from '../lib/perf.js'
 
 export type Resources = Map<ResourceId, ResourceAny>
 
@@ -102,7 +103,7 @@ export class ResourcesAndMetadataStore {
 		}
 
 		const elapsedMs = Math.round(performance.now() - start)
-		if (elapsedMs >= 100) {
+		if (shouldLogPerf(elapsedMs, 100)) {
 			console.info('[perf] updateResourcesAndMetadata', {
 				elapsedMs,
 				resources: resources.length,
