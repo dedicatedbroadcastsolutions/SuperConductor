@@ -70,6 +70,18 @@ if (process.env.NODE_ENV === 'development' && ENABLE_WHY_DID_YOU_RENDER) {
 }
 
 export const App = observer(function App() {
+	const startupStartRef = useRef<number>(performance.now())
+	const loggedFirstProject = useRef(false)
+	const loggedFirstAppData = useRef(false)
+	const logStartup = useCallback((label: string, data?: Record<string, unknown>) => {
+		const elapsedMs = Math.round(performance.now() - startupStartRef.current)
+		if (data) {
+			console.info('[startup]', label, { elapsedMs, ...data })
+		} else {
+			console.info('[startup]', label, { elapsedMs })
+		}
+	}, [])
+
 	const [project, setProject] = useState<Project>()
 	const [sorensenInitialized, setSorensenInitialized] = useState(false)
 	const { enqueueSnackbar, closeSnackbar } = useSnackbar()
@@ -107,8 +119,13 @@ export const App = observer(function App() {
 		[enqueueSnackbar, logger, serverAPI]
 	)
 
+	useEffect(() => {
+		logStartup('App mounted')
+	}, [logStartup])
+
 	// Handle IPC-messages from server
 	useEffect(() => {
+		logStartup('RealtimeDataProvider init')
 		const ipcClient = new RealtimeDataProvider(logger, {
 			systemMessage: (messageStr: string, options: SystemMessageOptions) => {
 				messageStr = messageStr.replace(/\n/g, '<br>')
@@ -149,10 +166,18 @@ export const App = observer(function App() {
 			updateAppData: (appData: AppData) => {
 				store.appStore.update(appData)
 				store.rundownsStore.update(appData.rundowns)
+				if (!loggedFirstAppData.current) {
+					loggedFirstAppData.current = true
+					logStartup('Received initial appData')
+				}
 			},
 			updateProject: (project: Project) => {
 				setProject(project)
 				store.projectStore.update(project)
+				if (!loggedFirstProject.current) {
+					loggedFirstProject.current = true
+					logStartup('Received initial project')
+				}
 			},
 			updatePeripheralTriggers: (peripheralTriggers: ActiveTriggers) => {
 				triggers.setPeripheralTriggers(peripheralTriggers)
@@ -174,7 +199,7 @@ export const App = observer(function App() {
 		return () => {
 			ipcClient.destroy()
 		}
-	}, [enqueueSnackbar, closeSnackbar, triggers, logger, handleError, serverAPI])
+	}, [enqueueSnackbar, closeSnackbar, triggers, logger, handleError, serverAPI, logStartup])
 
 	const errorHandlerContextValue = useMemo(() => {
 		return {
@@ -184,7 +209,16 @@ export const App = observer(function App() {
 
 	useEffect(() => {
 		// Ask backend for the data once ready:
-		serverAPI.triggerSendAll().catch(handleError)
+		logStartup('triggerSendAll start')
+		serverAPI
+			.triggerSendAll()
+			.then(() => {
+				logStartup('triggerSendAll resolved')
+			})
+			.catch((error) => {
+				logStartup('triggerSendAll failed')
+				handleError(error)
+			})
 
 		// @ts-expect-error hack:
 		window.makeDevData = () => {
@@ -200,7 +234,7 @@ export const App = observer(function App() {
 				}
 			})
 		}
-	}, [handleError, serverAPI])
+	}, [handleError, serverAPI, logStartup])
 
 	useEffect(() => {
 		window.addEventListener('error', handleError)
@@ -331,12 +365,14 @@ export const App = observer(function App() {
 
 	/* eslint-disable @typescript-eslint/unbound-method */
 	useEffect(() => {
+		logStartup('Sorensen init start')
 		Sorensen.init()
 			.then(() => {
 				setSorensenInitialized(true)
+				logStartup('Sorensen init resolved')
 			})
 			.catch(logger.error)
-	}, [logger.error, serverAPI])
+	}, [logger.error, serverAPI, logStartup])
 	/* eslint-enable @typescript-eslint/unbound-method */
 
 	const appStore = store.appStore
@@ -641,13 +677,7 @@ export const App = observer(function App() {
 		true
 	)
 
-	if (!project || !sorensenInitialized) {
-		return (
-			<div className="app-loading">
-				<Spinner heavyOperation />
-			</div>
-		)
-	}
+	const hasProject = Boolean(project)
 
 	const handleClickResizer: React.MouseEventHandler<HTMLDivElement> = (e) => {
 		const tarEl = e.target as HTMLElement
@@ -662,7 +692,7 @@ export const App = observer(function App() {
 		<HotkeyContext.Provider value={hotkeyContext}>
 			<LoggerContext.Provider value={logger}>
 				<IPCServerContext.Provider value={serverAPI}>
-					<ProjectContext.Provider value={project}>
+					<ProjectContext.Provider value={project ?? ({} as Project)}>
 						<ErrorHandlerContext.Provider value={errorHandlerContextValue}>
 							<div className="app" onClick={handleClickAnywhere}>
 								<ErrorBoundary>
@@ -691,7 +721,11 @@ export const App = observer(function App() {
 									}
 								</ErrorBoundary>
 
-								{store.guiStore.isNewRundownSelected() ? (
+								{!hasProject ? (
+									<div className="app-loading">
+										<Spinner heavyOperation />
+									</div>
+								) : store.guiStore.isNewRundownSelected() ? (
 									<ErrorBoundary>
 										<NewRundownPage />
 									</ErrorBoundary>
