@@ -50,6 +50,12 @@ export class ResourcesAndMetadataStore {
 		resources: Array<{ id: ResourceId; resource: ResourceAny | null }>,
 		metadata: SerializedProtectedMap<TSRDeviceId, MetadataAny | null>
 	): void {
+		const start = performance.now()
+		let updatedResources = 0
+		let deletedResources = 0
+		let updatedMetadata = 0
+		let deletedMetadata = 0
+
 		// Resources:
 		{
 			for (const { id, resource } of resources) {
@@ -60,11 +66,13 @@ export class ResourcesAndMetadataStore {
 					if (existingHash !== resourceHash) {
 						this.resources.set(id, resource)
 						this.resourceHashes.set(id, resourceHash)
+						updatedResources += 1
 					}
 				} else {
 					if (this.resources.has(id)) {
 						this.resources.delete(id)
 						this.resourceHashes.delete(id)
+						deletedResources += 1
 					}
 				}
 			}
@@ -72,9 +80,8 @@ export class ResourcesAndMetadataStore {
 
 		// Metadata:
 		{
-			for (const [deviceId, deviceMetadata] of deserializeProtectedMap<TSRDeviceId, MetadataAny | null>(
-				metadata
-			).entries()) {
+			const metadataMap = deserializeProtectedMap<TSRDeviceId, MetadataAny | null>(metadata)
+			for (const [deviceId, deviceMetadata] of metadataMap.entries()) {
 				const metadataHash = hashObj(deviceMetadata)
 
 				if (deviceMetadata) {
@@ -82,14 +89,28 @@ export class ResourcesAndMetadataStore {
 					if (existingHash !== metadataHash) {
 						this.metadata.set(deviceId, deviceMetadata)
 						this.metadataHashes.set(deviceId, metadataHash)
+						updatedMetadata += 1
 					}
 				} else {
 					if (this.metadata.has(deviceId)) {
 						this.metadata.delete(deviceId)
 						this.metadataHashes.delete(deviceId)
+						deletedMetadata += 1
 					}
 				}
 			}
+		}
+
+		const elapsedMs = Math.round(performance.now() - start)
+		if (elapsedMs >= 100) {
+			console.info('[perf] updateResourcesAndMetadata', {
+				elapsedMs,
+				resources: resources.length,
+				updatedResources,
+				deletedResources,
+				updatedMetadata,
+				deletedMetadata,
+			})
 		}
 	}
 	public isAnyDeviceRefreshing(): boolean {

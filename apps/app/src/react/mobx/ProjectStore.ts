@@ -42,9 +42,20 @@ export class ProjectStore {
 	}
 
 	update(project: Project): void {
+		const start = performance.now()
 		this.project = project
 
 		this._updateAssignedAreas()
+
+		const elapsedMs = Math.round(performance.now() - start)
+		if (elapsedMs >= 50) {
+			console.info('[perf] projectStore.update', {
+				elapsedMs,
+				bridges: Object.keys(project.bridges).length,
+				assignedAreas: this.assignedAreas.length,
+				availableAreas: this.availableAreas.length,
+			})
+		}
 	}
 
 	private _updateAssignedAreas() {

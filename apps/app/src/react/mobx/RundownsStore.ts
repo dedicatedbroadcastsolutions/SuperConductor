@@ -92,6 +92,19 @@ export class RundownsStore {
 	}
 
 	updateRundown = (rundownId: string, rundown: Rundown): void => {
+		const start = performance.now()
+		let groupCount = 0
+		let partCount = 0
+		let timelineCount = 0
+		if (rundown) {
+			groupCount = rundown.groups.length
+			for (const group of rundown.groups) {
+				partCount += group.parts.length
+				for (const part of group.parts) {
+					timelineCount += part.timeline.length
+				}
+			}
+		}
 		runInAction(() => {
 			this._rundownsClean.set(rundownId, rundown)
 			this._updateRundown(rundownId, rundown)
@@ -110,6 +123,15 @@ export class RundownsStore {
 				}
 			})
 		})
+		const elapsedMs = Math.round(performance.now() - start)
+		if (elapsedMs >= 100) {
+			console.info('[perf] updateRundown', {
+				elapsedMs,
+				groupCount,
+				partCount,
+				timelineCount,
+			})
+		}
 	}
 
 	hasRundown(rundownId: string): boolean {
