@@ -152,32 +152,35 @@ export class TSR {
 					const device = await devicePr
 
 					if (newDeviceOptions.type === DeviceType.CASPARCG) {
-						const originalPrepare = device.device.prepareForHandleState?.bind(device.device)
-						if (originalPrepare) {
-							device.device.prepareForHandleState = async (newStateTime: number) => {
-								const now = this.getCurrentTime()
-								this.log.info('TSR resync prepare', {
+						const casparDevice = device.device as any
+						const originalCommandReceiver = casparDevice?._commandReceiver?.bind(casparDevice)
+						if (originalCommandReceiver && !casparDevice.__scAmcpLogWrapped) {
+							casparDevice.__scAmcpLogWrapped = true
+							casparDevice._commandReceiver = async (
+								time: number,
+								cmd: { command?: unknown; params?: Record<string, unknown> },
+								context: string,
+								timelineObjId: string
+							) => {
+								const sentAt = this.getCurrentTime()
+								const commandName =
+									typeof cmd?.command === 'string'
+										? cmd.command
+										: cmd?.command !== undefined
+											? JSON.stringify(cmd.command)
+											: 'unknown'
+								this.log.info('CasparCG AMCP send', {
 									deviceId,
-									newStateTime,
-									now,
-									diff: newStateTime - now,
+									command: commandName,
+									params: cmd?.params ?? {},
+									context,
+									timelineObjId,
+									targetTime: time,
+									sentAt,
+									diff: sentAt - time,
+									resume: commandName.toLowerCase() === 'resume',
 								})
-								return originalPrepare(newStateTime)
-							}
-						}
-
-						const originalHandle = device.device.handleState?.bind(device.device)
-						if (originalHandle) {
-							device.device.handleState = async (newState: any, newMappings: any) => {
-								const now = this.getCurrentTime()
-								const stateTime = newState?.time
-								this.log.info('TSR resync handleState', {
-									deviceId,
-									stateTime,
-									now,
-									diff: typeof stateTime === 'number' ? stateTime - now : null,
-								})
-								return originalHandle(newState, newMappings)
+								return originalCommandReceiver(time, cmd, context, timelineObjId)
 							}
 						}
 					}
