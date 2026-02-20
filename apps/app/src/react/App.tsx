@@ -678,6 +678,7 @@ export const App = observer(function App() {
 	)
 
 	const hasProject = Boolean(project)
+	const resolvedProject = project
 
 	const handleClickResizer: React.MouseEventHandler<HTMLDivElement> = (e) => {
 		const tarEl = e.target as HTMLElement
@@ -731,7 +732,7 @@ export const App = observer(function App() {
 									</ErrorBoundary>
 								) : store.guiStore.isHomeSelected() ? (
 									<ErrorBoundary>
-										<HomePage project={project} />
+										<HomePage project={resolvedProject as Project} />
 									</ErrorBoundary>
 								) : (
 									<div
@@ -751,7 +752,7 @@ export const App = observer(function App() {
 											}}
 										>
 											<ErrorBoundary>
-												<RundownView mappings={project.mappings} />
+												<RundownView mappings={(resolvedProject as Project).mappings} />
 											</ErrorBoundary>
 										</div>
 										<div className="movable-separator">
@@ -769,7 +770,7 @@ export const App = observer(function App() {
 											}}
 										>
 											<ErrorBoundary>
-												<Sidebar mappings={project.mappings} />
+												<Sidebar mappings={(resolvedProject as Project).mappings} />
 											</ErrorBoundary>
 										</div>
 									</div>
