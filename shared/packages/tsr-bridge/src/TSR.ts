@@ -151,6 +151,37 @@ export class TSR {
 
 					const device = await devicePr
 
+					if (newDeviceOptions.type === DeviceType.CASPARCG) {
+						const originalPrepare = device.device.prepareForHandleState?.bind(device.device)
+						if (originalPrepare) {
+							device.device.prepareForHandleState = async (newStateTime: number, ...args: any[]) => {
+								const now = this.getCurrentTime()
+								this.log.info('TSR resync prepare', {
+									deviceId,
+									newStateTime,
+									now,
+									diff: newStateTime - now,
+								})
+								return originalPrepare(newStateTime, ...args)
+							}
+						}
+
+						const originalHandle = device.device.handleState?.bind(device.device)
+						if (originalHandle) {
+							device.device.handleState = async (newState: any, newMappings: any) => {
+								const now = this.getCurrentTime()
+								const stateTime = newState?.time
+								this.log.info('TSR resync handleState', {
+									deviceId,
+									stateTime,
+									now,
+									diff: typeof stateTime === 'number' ? stateTime - now : null,
+								})
+								return originalHandle(newState, newMappings)
+							}
+						}
+					}
+
 					await device.device.on('connectionChanged', (...args) => {
 						// TODO: figure out why the arguments to this event callback lost the correct typings
 						const status = args[0] as DeviceStatus
