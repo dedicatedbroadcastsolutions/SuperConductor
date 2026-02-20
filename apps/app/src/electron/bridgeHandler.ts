@@ -360,8 +360,15 @@ abstract class AbstractBridgeConnection {
 		}
 	}
 	addTimeline(timelineId: string, timeline: TSRTimeline) {
+		const currentTime = this.getCurrentTime()
+		this.log.debug('Bridge timeline send timebase', {
+			timelineId,
+			currentTime,
+			now: Date.now(),
+			diff: Date.now() - currentTime,
+		})
 		this.sentTimelines[timelineId] = timeline
-		this.send({ type: 'addTimeline', timelineId, timeline, currentTime: this.getCurrentTime() })
+		this.send({ type: 'addTimeline', timelineId, timeline, currentTime })
 	}
 	removeTimeline(timelineId: string) {
 		delete this.sentTimelines[timelineId]
