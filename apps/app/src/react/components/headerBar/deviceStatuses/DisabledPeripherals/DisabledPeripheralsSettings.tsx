@@ -26,6 +26,7 @@ export const DisabledPeripheralsSettings: React.FC<{
 	const toggleManualConnect = useCallback(
 		(peripheral?: DisabledPeripheralInfo) => {
 			if (!peripheral) return
+			if (!project?.bridges) return
 			const peripheralSettings =
 				project.bridges[unprotectString<BridgeId>(peripheral.bridgeId)].settings.peripherals[
 					unprotectString<PeripheralId>(peripheral.deviceId)

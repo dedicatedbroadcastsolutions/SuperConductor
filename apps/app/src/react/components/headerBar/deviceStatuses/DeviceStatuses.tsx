@@ -41,6 +41,9 @@ export const DeviceStatuses: React.FC = observer(function DeviceStatuses() {
 	}, [])
 
 	const allDevices = useMemoComputedObject(() => {
+		if (!project?.bridges) {
+			return []
+		}
 		const newAllDevices: {
 			bridgeId: BridgeId
 			bridgeStatus: BridgeStatus
@@ -68,6 +71,9 @@ export const DeviceStatuses: React.FC = observer(function DeviceStatuses() {
 		return Array.from(appStore.peripherals.entries()).sort(sortOn((x) => x[0]))
 	}, [appStore.peripherals])
 	const disabledPeripherals = useMemoComputedObject(() => {
+		if (!project?.bridges) {
+			return []
+		}
 		const newDisabledPeripherals: DisabledPeripheralInfo[] = []
 		for (const [bridgeId, bridgeStatus] of appStore.bridgeStatuses.entries()) {
 			const bridgeSettings = project.bridges[unprotectString<BridgeId>(bridgeId)] as Bridge | undefined

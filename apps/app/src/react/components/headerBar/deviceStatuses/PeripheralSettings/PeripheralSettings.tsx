@@ -55,13 +55,20 @@ export const PeripheralSettings: React.FC<{
 		serverAPI.finishDefiningArea().catch(handleError)
 	}, [handleError, serverAPI])
 
-	const bridge = project.bridges[unprotectString<BridgeId>(bridgeId)]
-
 	const disconnect = useCallback(() => {
+		if (!project?.bridges) return
+		const bridge = project.bridges[unprotectString<BridgeId>(bridgeId)]
+		if (!bridge) return
 		bridge.settings.peripherals[unprotectString<PeripheralId>(deviceId)].manualConnect = false
 		serverAPI.updateProject({ id: project.id, project }).catch(handleError)
 		onDisconnect()
-	}, [bridge.settings.peripherals, deviceId, handleError, onDisconnect, project, serverAPI])
+	}, [bridgeId, deviceId, handleError, onDisconnect, project, serverAPI])
+
+	if (!project?.bridges) {
+		return null
+	}
+
+	const bridge = project.bridges[unprotectString<BridgeId>(bridgeId)]
 
 	if (!bridge) return null
 
