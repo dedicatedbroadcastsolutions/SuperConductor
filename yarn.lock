@@ -14778,9 +14778,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"timeline-state-resolver@github:dedicatedbroadcastsolutions/sofie-timeline-state-resolver#d6fb899f24b4bf1e04f0233ccac42eb634f7335d":
+"timeline-state-resolver@github:dedicatedbroadcastsolutions/sofie-timeline-state-resolver#fix/casparcg_reconnect_resolve_51":
   version: 9.2.2
-  resolution: "timeline-state-resolver@https://github.com/dedicatedbroadcastsolutions/sofie-timeline-state-resolver.git#commit=d6fb899f24b4bf1e04f0233ccac42eb634f7335d"
+  resolution: "timeline-state-resolver@https://github.com/dedicatedbroadcastsolutions/sofie-timeline-state-resolver.git#commit=7eaff81b6e74bef422d4129c4e0a1767873fcd31"
   dependencies:
     "@tv2media/v-connection": "npm:^7.3.2"
     atem-connection: "npm:3.5.0"
@@ -14813,7 +14813,7 @@ __metadata:
     utf-8-validate: "npm:^5.0.10"
     ws: "npm:^7.5.10"
     xml-js: "npm:^1.6.11"
-  checksum: 10c0/5b8df0472930d1f30936ca7e05143c61f2c227a4daf2d67dd5b68c5b7b9804bcdbc1e2ec4851fa7837a3e3ee295a654954a1a271f6f8deeae3b46a824f5b3185
+  checksum: 10c0/42ef47e9d91ee33796b8faf1c2ee01e6bbebd0e658e722c6eb484c0c12a999793e129465ff897b48420e6b047e6664db70e18066fe5dd2786b8d31becba272b2
   languageName: node
   linkType: hard
 

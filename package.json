@@ -44,7 +44,7 @@
 		"app-builder-bin": "npm:@julusian/app-builder-bin@4.0.1",
 		"threadedclass": "^1.2.1",
 		"serialport": "https://registry.yarnpkg.com/@favware/skip-dependency/-/skip-dependency-1.0.2.tgz",
-		"timeline-state-resolver": "github:dedicatedbroadcastsolutions/sofie-timeline-state-resolver#d6fb899f24b4bf1e04f0233ccac42eb634f7335d"
+		"timeline-state-resolver": "github:dedicatedbroadcastsolutions/sofie-timeline-state-resolver#fix/casparcg_reconnect_resolve_51"
 	},
 	"devDependencies": {
 		"@sofie-automation/eslint-plugin": "^0.1.1",
