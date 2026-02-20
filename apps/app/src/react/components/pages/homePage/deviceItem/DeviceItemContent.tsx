@@ -1,4 +1,4 @@
-import { TextField } from '@mui/material'
+import { MenuItem, TextField } from '@mui/material'
 import React, { useCallback, useContext, useEffect, useState } from 'react'
 import { TextBtn } from '../../../../components/inputs/textBtn/TextBtn.js'
 import { AtemOptions, CasparCGOptions, DeviceType, OBSOptions, OSCDeviceType } from 'timeline-state-resolver-types'
@@ -13,6 +13,17 @@ import { TSRDeviceId, unprotectString } from '@shared/models'
 
 const MIN_PORT = 1
 const MAX_PORT = 65535
+const FPS_OPTIONS = [
+	{ label: 'Auto (default)', value: '' },
+	{ label: '23.98 (24000/1001)', value: 24000 / 1001 },
+	{ label: '24', value: 24 },
+	{ label: '25', value: 25 },
+	{ label: '29.97 (30000/1001)', value: 30000 / 1001 },
+	{ label: '30', value: 30 },
+	{ label: '50', value: 50 },
+	{ label: '59.94 (60000/1001)', value: 60000 / 1001 },
+	{ label: '60', value: 60 },
+]
 
 export const DeviceItemContent: React.FC<{
 	bridge: Bridge
@@ -215,24 +226,26 @@ export const DeviceItemContent: React.FC<{
 								<TextField
 									label="FPS"
 									value={fps}
+									select
 									size="small"
 									margin="dense"
-									type="number"
-									InputProps={{ inputProps: { min: 1, max: 120, step: 0.01 } }}
 									onChange={(event) => {
-										const parsed = event.target.value === '' ? '' : parseFloat(event.target.value)
-										setFps(Number.isNaN(parsed) ? '' : parsed)
+										const raw = event.target.value
+										const parsed = raw === '' ? '' : parseFloat(String(raw))
+										const next = Number.isNaN(parsed) ? '' : parsed
+										setFps(next)
+										handleFpsChange(next)
 									}}
-									onBlur={() => {
-										handleFpsChange(fps)
-									}}
-									onKeyUp={(e) => {
-										if (e.key === 'Enter') {
-											handleFpsChange(fps)
-											;(document.activeElement as HTMLInputElement).blur()
-										}
-									}}
-								/>
+								>
+									{FPS_OPTIONS.map((option) => (
+										<MenuItem key={option.label} value={option.value}>
+											{option.label}
+										</MenuItem>
+									))}
+									{fps !== '' && !FPS_OPTIONS.some((option) => option.value === fps) && (
+										<MenuItem value={fps}>Custom ({fps})</MenuItem>
+									)}
+								</TextField>
 							</div>
 						)}
 					</>
