@@ -1,4 +1,4 @@
-import { MenuItem, TextField } from '@mui/material'
+import { TextField } from '@mui/material'
 import React, { useCallback, useContext, useEffect, useState } from 'react'
 import { TextBtn } from '../../../../components/inputs/textBtn/TextBtn.js'
 import { AtemOptions, CasparCGOptions, DeviceType, OBSOptions, OSCDeviceType } from 'timeline-state-resolver-types'
@@ -13,17 +13,6 @@ import { TSRDeviceId, unprotectString } from '@shared/models'
 
 const MIN_PORT = 1
 const MAX_PORT = 65535
-const FPS_OPTIONS = [
-	{ label: 'Auto (default)', value: '' },
-	{ label: '23.98 (24000/1001)', value: 24000 / 1001 },
-	{ label: '24', value: 24 },
-	{ label: '25', value: 25 },
-	{ label: '29.97 (30000/1001)', value: 30000 / 1001 },
-	{ label: '30', value: 30 },
-	{ label: '50', value: 50 },
-	{ label: '59.94 (60000/1001)', value: 60000 / 1001 },
-	{ label: '60', value: 60 },
-]
 
 export const DeviceItemContent: React.FC<{
 	bridge: Bridge
@@ -38,7 +27,6 @@ export const DeviceItemContent: React.FC<{
 	const [host, setHost] = useState('')
 	const [port, setPort] = useState(MIN_PORT)
 	const [password, setPassword] = useState('')
-	const [fps, setFps] = useState<number | ''>('')
 	const deviceSettings = bridge.settings.devices[unprotectString<TSRDeviceId>(deviceId)]
 
 	const handleDeviceNameChange = useCallback(
@@ -98,23 +86,6 @@ export const DeviceItemContent: React.FC<{
 		[deviceSettings, handleError, ipcServer, project]
 	)
 
-	const handleFpsChange = useCallback(
-		(newFps: number | '') => {
-			if (!deviceSettings || deviceSettings.type !== DeviceType.CASPARCG) {
-				return
-			}
-
-			const options = deviceSettings.options as CasparCGOptions
-			if (newFps === '') {
-				delete options.fps
-			} else {
-				options.fps = newFps
-			}
-			ipcServer.updateProject({ id: project.id, project }).catch(handleError)
-		},
-		[deviceSettings, handleError, ipcServer, project]
-	)
-
 	const removeDevice = useCallback(() => {
 		delete bridge.settings.devices[unprotectString<TSRDeviceId>(deviceId)]
 		ipcServer.updateProject({ id: project.id, project }).catch(handleError)
@@ -128,13 +99,6 @@ export const DeviceItemContent: React.FC<{
 		const deviceOptions = deviceSettings?.options as CasparCGOptions | AtemOptions
 		setHost(deviceOptions?.host ?? '')
 		setPort(deviceOptions?.port ?? MIN_PORT)
-		if (deviceSettings?.type === DeviceType.CASPARCG) {
-			const casparOptions = deviceSettings.options as CasparCGOptions
-			setFps(casparOptions?.fps ?? '')
-		} else {
-			setFps('')
-		}
-
 		if (deviceSettings?.type === DeviceType.OBS) {
 			setPassword(deviceSettings.options?.password ?? '')
 		} else {
@@ -221,33 +185,6 @@ export const DeviceItemContent: React.FC<{
 								}}
 							/>
 						</div>
-						{deviceSettings.type === DeviceType.CASPARCG && (
-							<div className="form-control">
-								<TextField
-									label="FPS"
-									value={fps}
-									select
-									size="small"
-									margin="dense"
-									onChange={(event) => {
-										const raw = event.target.value
-										const parsed = raw === '' ? '' : parseFloat(String(raw))
-										const next = Number.isNaN(parsed) ? '' : parsed
-										setFps(next)
-										handleFpsChange(next)
-									}}
-								>
-									{FPS_OPTIONS.map((option) => (
-										<MenuItem key={option.label} value={option.value}>
-											{option.label}
-										</MenuItem>
-									))}
-									{fps !== '' && !FPS_OPTIONS.some((option) => option.value === fps) && (
-										<MenuItem value={fps}>Custom ({fps})</MenuItem>
-									)}
-								</TextField>
-							</div>
-						)}
 					</>
 				)}
 				{deviceSettings.type === DeviceType.OBS ? (
