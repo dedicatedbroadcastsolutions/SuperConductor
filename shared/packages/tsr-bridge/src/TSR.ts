@@ -188,7 +188,16 @@ export class TSR {
 					await device.device.on('connectionChanged', (...args) => {
 						// TODO: figure out why the arguments to this event callback lost the correct typings
 						const status = args[0] as DeviceStatus
+						const previousStatus = this.deviceStatus.get(deviceId)
 						this.onDeviceStatus(deviceId, status)
+						if (
+							newDeviceOptions.type === DeviceType.CASPARCG &&
+							status.statusCode === StatusCode.GOOD &&
+							previousStatus?.statusCode !== StatusCode.GOOD
+						) {
+							// Force a fresh resolve so reconnect seeks reflect the current time.
+							this.conductor.resetResolver()
+						}
 					})
 					// await device.device.on('commandError', onCommandError)
 					// await device.device.on('info', (e: any, ...args: any[]) => this.logger.info(fixError(e), ...args))
